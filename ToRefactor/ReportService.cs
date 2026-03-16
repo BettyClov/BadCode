@@ -6,81 +6,72 @@ namespace ToRefactor
 {
     internal class ReportService
     {
-        static readonly HttpClient http = new HttpClient();
+        readonly HttpClient http = new HttpClient();
         const string API = "https://jsonplaceholder.typicode.com";
 
       
-        static List<string> GetUsers()
-        {
+        async Task<List<string>> GetUsersAsync() {
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Загружаю пользователей...");
-            var json = http.GetStringAsync($"{API}/users").GetAwaiter().GetResult();
-            Thread.Sleep(500); 
+            var json = await http.GetStringAsync($"{API}/users"); 
+            await Task.Delay(500); 
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Пользователи загружены");
             return new List<string> { "Alice", "Bob", "Charlie" };
         }
 
      
-        static List<string> GetPostsForUser(string user)
-        {
+        async Task<List<string>> GetPostsForUserAsync(string user) {
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Загружаю посты для {user}...");
-            var json = http.GetStringAsync($"{API}/posts?userId=1").GetAwaiter().GetResult();
-            Thread.Sleep(300);
+            var json = await http.GetStringAsync($"{API}/posts?userId=1");
+            await Task.Delay(300);
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Посты для {user} загружены");
             return new List<string> { $"Пост1_{user}", $"Пост2_{user}" };
         }
 
       
-        static int GetCommentCount(string post)
-        {
+        async Task<int> GetCommentCountAsync(string post) {
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Считаю комментарии: {post}...");
-            var json = http.GetStringAsync($"{API}/comments?postId=1").GetAwaiter().GetResult();
-            Thread.Sleep(200);
+            var json = await http.GetStringAsync($"{API}/comments?postId=1");
+            await Task.Delay(200);
             return new Random().Next(1, 20);
         }
 
       
-        static void SaveReport(string content)
-        {
+        async Task SaveReportAsync(string content) {
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Сохраняю отчёт...");
-            File.WriteAllText("report.txt", content);
-            Thread.Sleep(400); 
+            await File.WriteAllTextAsync("report.txt", content); 
+            await Task.Delay(400);
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Отчёт сохранён");
         }
 
        
-        static bool SendNotification(string email)
-        {
+        async Task<bool> SendNotificationAsync(string email) {
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Отправляю письмо на {email}...");
-            http.PostAsync($"{API}/posts", null).GetAwaiter().GetResult();
-            Thread.Sleep(600);
+            await http.PostAsync($"{API}/posts", null); 
+            await Task.Delay(600);
             Console.WriteLine($"  [#{Thread.CurrentThread.ManagedThreadId}] Письмо отправлено");
             return true;
         }
 
-        public static void GenerateReport()
-        {
+        public async static Task GenerateReportAsync() {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            Console.WriteLine("\n[SYNC] Генерация отчёта...\n");
+            Console.WriteLine("\n[ASYNC] Генерация отчёта...\n");
+            var service = new ReportService(); 
 
-            
-            var users = GetUsers();                          
+            var users = await service.GetUsersAsync(); 
 
             var report = "";
-            foreach (var user in users)
-            {
-                var posts = GetPostsForUser(user);              
-                foreach (var post in posts)
-                {
-                    var comments = GetCommentCount(post);      
+            foreach (var user in users) {
+                var posts = await service.GetPostsForUserAsync(user); 
+                foreach (var post in posts) {
+                    var comments = await service.GetCommentCountAsync(post); 
                     report += $"{user} | {post} | комментариев: {comments}\n";
                 }
             }
 
-            SaveReport(report);                                 
-            SendNotification("boss@company.com");               
+            await service.SaveReportAsync(report); 
+            await service.SendNotificationAsync("boss@company.com"); 
 
-            Console.WriteLine($"\n[SYNC] Готово за {sw.ElapsedMilliseconds}мс");
-          
+        Console.WriteLine($"[ASYNC] Готово за {sw.ElapsedMilliseconds}мс");
         }
     }
 }
