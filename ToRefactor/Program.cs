@@ -1,10 +1,10 @@
-﻿namespace ToRefactor
+namespace ToRefactor
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            ReportService.GenerateReport();
+            await ReportService.GenerateReportAsync();
         }
     }
 }
